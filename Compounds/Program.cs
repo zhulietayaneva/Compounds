@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace Compounds
 {
@@ -6,7 +7,17 @@ namespace Compounds
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            string[] input = File.ReadAllLines(@"..\..\..\compound.txt");
+
+            foreach (var line in input)
+            {
+                string[] tokens = line.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+
+                var compound = new Compound(tokens[0]);
+
+
+
+            }
         }
     }
 }

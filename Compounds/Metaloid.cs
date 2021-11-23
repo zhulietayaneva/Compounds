@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace Compounds
 {
-   public class Contents
+    class Metaloid:Element
     {
-        public Element Element { get; set; }
-        public int count { get; set; }
-
+        public Metaloid(string notation, double m) : base(notation)
+        {
+            base.Mass = m;
+        }
     }
 }
