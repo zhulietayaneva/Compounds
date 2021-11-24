@@ -1,34 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Compounds
 {
     public class Compound
     {
         public string Name { get; private set; }
-        public List<Contents> Contents { get; private set; }
-
+        public List<Contents> Contents { get; protected set; }
+        public bool IsValid() => !(Char.IsUpper(Name[0]));
         public Compound(string formula_name)
         {
-            Name = formula_name;
+            var tokens = formula_name.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+            Name = tokens[1];
+            Contents = new List<Contents>(FillContents(tokens[0]));
         }
         public int AtomCount()
         {
-            return Contents.Count();
+            return Contents.Sum(x => x.count);
         }
-
         public int ElementCount()
         {
-            return Name.Distinct().Count(x => Char.IsUpper(x));
+            return Contents.Distinct().Count();
         }
 
         public double Mass()
         {
-            return 0;
+            return Math.Round(Contents.Sum(e => e.Element.Mass * e.count),3);
         }
 
         public override string ToString()
@@ -41,31 +40,67 @@ namespace Compounds
             return null;
         }
 
-        protected List<Contents> FillContents()
+        private List<Contents> FillContents(string formula)
         {
-            for (int i = Name.Length - 1; i >= 0; i--)
+            var list = new List<Contents>();
+            var matches = Regex.Matches(formula, @"[A-Z][a-z]?\d*|\((?:[^()]*(?:\(.*\))?[^()]*)+\)\d+");
+            foreach (var match in matches)
             {
-                if (Char.IsDigit(Name[i]))
+                var matchString = match.ToString();
+                var singleElementRegex = Regex.Matches(matchString, @"[A-Z][a-z]?\d*");
+                var content = new Contents();
+
+
+
+                if (matchString.Contains("("))
                 {
-                    //(?<gr1>[A-Z][a-z]?[\d]?)|(\((?(<gr1>))+\)[d]+)
-                    /*Fe(SO4)3
-                    H20
-                    BrI
-                    BrClH2Si
-                    CCl4
-                    CH3I
-                    C2H5Br
-                    H2O4S
-                    Mg(OH)2
-                    Al2(SO4)3
-                    (NH4)2SO4*/
+                    int multiplier = int.Parse(matchString.Substring(matchString.LastIndexOf(")") + 1));
+
+                    foreach (var singleMatch in singleElementRegex)
+                    {
+                        var elementAsString = singleMatch.ToString();
+                        CreateContent(content, elementAsString);
+                        content.count *= multiplier;
+
+                    }
+
                 }
+                else
+                {
+                    CreateContent(content, matchString);
+                }
+                list.Add(content);
+            }
 
-                var test = Regex.Match()
-
-}
+            return list;
         }
-
-
+        private static void CreateContent(Contents content, string elementAsString)
+        {
+            if (Char.IsLower(elementAsString[1]))
+            {
+                content.Element = new Element(elementAsString.Substring(0, 2));
+                if (elementAsString.Length > 2)
+                {
+                    content.count = int.Parse(elementAsString.Substring(2));
+                }
+                else
+                {
+                    content.count = 1;
+                }
+            }
+            else
+            {
+                content.Element = new Element(elementAsString.Substring(0, 1));
+                if (elementAsString.Length > 1)
+                {
+                    content.count = int.Parse(elementAsString.Substring(1));
+                }
+                else
+                {
+                    content.count = 1;
+                }
+            }
+        }
     }
 }
+
