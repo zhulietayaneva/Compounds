@@ -11,10 +11,9 @@ namespace Compounds
         public List<Contents> Contents { get; protected set; }
         public bool IsValid() => !(Char.IsUpper(Name[0]));
         public Compound(string formula_name)
-        {
-            var tokens = formula_name.Split(" ", StringSplitOptions.RemoveEmptyEntries);
-            Name = tokens[1];
-            Contents = new List<Contents>(FillContents(tokens[0]));
+        {           
+            Name = formula_name.Substring(formula_name.IndexOf(" ")+1);
+            Contents = new List<Contents>(FillContents(formula_name.Substring(0,formula_name.IndexOf(" ")+1)));
         }
         public int AtomCount()
         {
@@ -27,7 +26,7 @@ namespace Compounds
 
         public double Mass()
         {
-            return Math.Round(Contents.Sum(e => e.Element.Mass * e.count),3);
+            return Math.Round(Contents.Sum(e => e.Element.Mass * e.count), 3);
         }
 
         public override string ToString()
@@ -46,21 +45,19 @@ namespace Compounds
             var matches = Regex.Matches(formula, @"[A-Z][a-z]?\d*|\((?:[^()]*(?:\(.*\))?[^()]*)+\)\d+");
             foreach (var match in matches)
             {
-                var matchString = match.ToString();
-                var singleElementRegex = Regex.Matches(matchString, @"[A-Z][a-z]?\d*");
+                var matchString = match.ToString();                
                 var content = new Contents();
-
-
 
                 if (matchString.Contains("("))
                 {
                     int multiplier = int.Parse(matchString.Substring(matchString.LastIndexOf(")") + 1));
-
+                    var singleElementRegex = Regex.Matches(matchString, @"[A-Z][a-z]?\d*");
                     foreach (var singleMatch in singleElementRegex)
                     {
                         var elementAsString = singleMatch.ToString();
                         CreateContent(content, elementAsString);
                         content.count *= multiplier;
+                        list.Add(content);
 
                     }
 
@@ -68,38 +65,27 @@ namespace Compounds
                 else
                 {
                     CreateContent(content, matchString);
+                    list.Add(content);
                 }
-                list.Add(content);
+                
             }
 
             return list;
         }
         private static void CreateContent(Contents content, string elementAsString)
         {
-            if (Char.IsLower(elementAsString[1]))
+            var indexOfCount = elementAsString.IndexOfAny("0123456789".ToCharArray());
+            if (indexOfCount > 0)
             {
-                content.Element = new Element(elementAsString.Substring(0, 2));
-                if (elementAsString.Length > 2)
-                {
-                    content.count = int.Parse(elementAsString.Substring(2));
-                }
-                else
-                {
-                    content.count = 1;
-                }
+                content.Element = new Element(elementAsString.Substring(0, indexOfCount));
+                content.count = int.Parse(elementAsString.Substring(indexOfCount));
             }
             else
             {
-                content.Element = new Element(elementAsString.Substring(0, 1));
-                if (elementAsString.Length > 1)
-                {
-                    content.count = int.Parse(elementAsString.Substring(1));
-                }
-                else
-                {
-                    content.count = 1;
-                }
+                content.Element = new Element(elementAsString);
+                content.count = 1;
             }
+
         }
     }
 }

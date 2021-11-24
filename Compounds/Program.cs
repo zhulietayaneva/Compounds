@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-
 namespace Compounds
 {
     class Program
@@ -14,7 +12,7 @@ namespace Compounds
             var compoundsList = new List<Compound>();
             foreach (var line in input)
             {
-                string[] tokens = line.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+               
 
                 var compound = new Compound(line);
 
@@ -30,12 +28,12 @@ namespace Compounds
                                                    AtomCount=e.AtomCount(),
                                                    Compound=e
                                                 }).ToList();
-            var elementsOnly = new List<Element>();
-            elementsOnly.AddRange(flattened.SelectMany(e => e.Elements).OrderBy(e=>e.Notation).Distinct().ToList());
-            for (int i = 0; i < elementsOnly.Count; i++)
+            var Names = flattened.SelectMany(e => e.Elements).Select(e => e.Notation).Distinct().ToList();
+            var elWithMass = new List<Element>();
+            for (int i = 0; i < Names.Count; i++)
             {
-                var element = elementsOnly[i];
-
+                var element = new Element(Names[i]);
+                
                 Console.WriteLine($"Input data for {element.Notation}");
                 Console.WriteLine($"Kind (1-metal,2-nonmetal,3-metalloid):  ");
                 int type = int.Parse(Console.ReadLine());
@@ -44,15 +42,17 @@ namespace Compounds
 
                 switch (type)
                 {
-
                     case 1:
                         element = new Metal(element.Notation, mass);
+                        elWithMass.Add(element);
                         break;
                     case 2:
                         element = new Nonmetal(element.Notation, mass);
+                        elWithMass.Add(element);
                         break;
                     case 3:
                         element = new Metaloid(element.Notation, mass);
+                        elWithMass.Add(element);
                         break;
                     default:
                         Console.WriteLine("Invalid kind.");
@@ -63,9 +63,7 @@ namespace Compounds
 
             foreach (var compound in flattened)
             {
-                compound.Elements.Select(e => e = elementsOnly.Find(e2=>e2.Notation==e.Notation));
-                 
-
+                compound.Elements.Select(e => e = Names.Find(e2=>e2==e.Notation));
             }
             var res = flattened.Select(e => e.Compound).OrderBy(e => e.AtomCount()).ThenBy(e => e.Mass()).ToList();
             foreach (var item in res)
